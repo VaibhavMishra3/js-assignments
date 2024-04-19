@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /********************************************************************************************
  *                                                                                          *
@@ -7,7 +7,6 @@
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield        *
  *                                                                                          *
  ********************************************************************************************/
-
 
 /**
  * Returns the lines sequence of "99 Bottles of Beer" song:
@@ -33,9 +32,21 @@
  *
  */
 function* get99BottlesOfBeer() {
-    throw new Error('Not implemented');
+  for (let i = 99; i >= 0; i--) {
+    if (i === 1) {
+      yield `${i} bottle of beer on the wall, ${i} bottle of beer.`;
+      yield `Take one down and pass it around, no more bottles of beer on the wall.`;
+    } else if (i > 0) {
+      yield `${i} bottles of beer on the wall, ${i} bottles of beer.`;
+      yield `Take one down and pass it around, ${
+        i - 1 === 1 ? i - 1 + " bottle" : i - 1 + " bottles"
+      } of beer on the wall.`;
+    } else {
+      yield `No more bottles of beer on the wall, no more bottles of beer.`;
+      yield `Go to the store and buy some more, 99 bottles of beer on the wall.`;
+    }
+  }
 }
-
 
 /**
  * Returns the Fibonacci sequence:
@@ -47,9 +58,13 @@ function* get99BottlesOfBeer() {
  *
  */
 function* getFibonacciSequence() {
-    throw new Error('Not implemented');
+  let a = 0;
+  let b = 1;
+  while (true) {
+    yield a;
+    [a, b] = [b, a + b];
+  }
 }
-
 
 /**
  * Traverses a tree using the depth-first strategy
@@ -82,9 +97,25 @@ function* getFibonacciSequence() {
  *
  */
 function* depthTraversalTree(root) {
-    throw new Error('Not implemented');
-}
+  const stack = [root];
+  const visited = new Set();
 
+  while (stack.length > 0) {
+    const node = stack.pop();
+
+    if (!visited.has(node)) {
+      visited.add(node);
+      yield node;
+
+      // Add children in reverse order to explore them first (depth-first)
+      if (node.children) {
+        for (let i = node.children.length - 1; i >= 0; i--) {
+          stack.push(node.children[i]);
+        }
+      }
+    }
+  }
+}
 
 /**
  * Traverses a tree using the breadth-first strategy
@@ -108,9 +139,28 @@ function* depthTraversalTree(root) {
  *
  */
 function* breadthTraversalTree(root) {
-    throw new Error('Not implemented');
-}
+  if (!root) return; // Handle empty tree case
 
+  const queue = [root]; // Queue to store nodes for exploration
+  const visited = new Set(); // Keep track of visited nodes to avoid cycles
+
+  while (queue.length > 0) {
+    const node = queue.shift(); // FIFO - dequeue the first node
+
+    if (!visited.has(node)) {
+      // Check if node is not already visited
+      visited.add(node);
+      yield node; // Process the current node
+
+      if (node.children) {
+        // Add children to the queue for exploration in the next level
+        for (const child of node.children) {
+          queue.push(child);
+        }
+      }
+    }
+  }
+}
 
 /**
  * Merges two yield-style sorted sequences into the one sorted sequence.
@@ -126,14 +176,35 @@ function* breadthTraversalTree(root) {
  *   [ 1, 3, 5, ... ], [ -1 ] => [ -1, 1, 3, 5, ...]
  */
 function* mergeSortedSequences(source1, source2) {
-    throw new Error('Not implemented');
+  let it1 = source1();
+  let it2 = source2();
+  let item1 = it1.next();
+  let item2 = it2.next();
+  while (item1.done === false && item2.done === false) {
+    if (item1.value < item2.value) {
+      yield item1.value;
+      item1 = it1.next();
+    } else {
+      yield item2.value;
+      item2 = it2.next();
+    }
+  }
+
+  while (item1.done == false) {
+    yield item1.value;
+    item1 = it1.next();
+  }
+
+  while (item2.done == false) {
+    yield item2.value;
+    item2 = it2.next();
+  }
 }
 
-
 module.exports = {
-    get99BottlesOfBeer: get99BottlesOfBeer,
-    getFibonacciSequence: getFibonacciSequence,
-    depthTraversalTree: depthTraversalTree,
-    breadthTraversalTree: breadthTraversalTree,
-    mergeSortedSequences: mergeSortedSequences
+  get99BottlesOfBeer: get99BottlesOfBeer,
+  getFibonacciSequence: getFibonacciSequence,
+  depthTraversalTree: depthTraversalTree,
+  breadthTraversalTree: breadthTraversalTree,
+  mergeSortedSequences: mergeSortedSequences,
 };
