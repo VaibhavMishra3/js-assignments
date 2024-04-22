@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**************************************************************************************************
  *                                                                                                *
@@ -7,7 +7,6 @@
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object        *
  *                                                                                                *
  **************************************************************************************************/
-
 
 /**
  * Returns the rectagle object with width and height parameters and getArea() method
@@ -23,9 +22,13 @@
  *    console.log(r.getArea());   // => 200
  */
 function Rectangle(width, height) {
-    throw new Error('Not implemented');
+  this.width = width;
+  this.height = height;
 }
 
+Rectangle.prototype.getArea = function () {
+  return this.width * this.height;
+};
 
 /**
  * Returns the JSON representation of specified object
@@ -38,9 +41,8 @@ function Rectangle(width, height) {
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
 function getJSON(obj) {
-    throw new Error('Not implemented');
+  return JSON.stringify(obj);
 }
-
 
 /**
  * Returns the object of specified type from JSON representation
@@ -54,9 +56,10 @@ function getJSON(obj) {
  *
  */
 function fromJSON(proto, json) {
-    throw new Error('Not implemented');
+  const obj = Object.create(proto);
+  Object.assign(obj, JSON.parse(json));
+  return obj;
 }
-
 
 /**
  * Css selectors builder
@@ -106,41 +109,112 @@ function fromJSON(proto, json) {
  *  For more examples see unit tests.
  */
 
+class Selector {
+  constructor() {
+    this.specificity = 0; // Track selector specificity
+    this.parts = []; // Array to store selector parts
+    this.seen = new Set();
+  }
+
+  _checkDuplicate(value) {
+    if (this.seen.has(value)) {
+      throw new Error(
+        "Element, id and pseudo-element should not occur more than one time inside the selector"
+      );
+    }
+    this.seen.add(value);
+  }
+
+  element(value) {
+    this._checkDuplicate("element");
+    this.parts.push(`${value}`);
+    this.specificity += 1;
+    return this;
+  }
+  id(value) {
+    this._checkDuplicate("id");
+    this.parts.push(`#${value}`);
+    this.specificity += 100; // ID selector has high specificity
+    return this;
+  }
+
+  class(value) {
+    this._checkDuplicate("class");
+    this.parts.push(`.${value}`);
+    this.specificity += 10; // Class selector has medium specificity
+    return this;
+  }
+
+  attr(value) {
+    this._checkDuplicate("attr");
+    const attr = `[${value}]`;
+    this.parts.push(attr);
+    this.specificity += 1; // Attribute selector has low specificity
+    return this;
+  }
+
+  pseudoClass(value) {
+    this._checkDuplicate("pseudoClass");
+    this.parts.push(`:${value}`);
+    this.specificity += 1; // Pseudo-class selector has low specificity
+    return this;
+  }
+
+  pseudoElement(value) {
+    this._checkDuplicate("psuedoElement");
+    this.parts.push(`::${value}`);
+    this.specificity += 0; // Pseudo-element selector has no specificity
+    return this;
+  }
+
+  stringify() {
+    return this.parts.join("");
+  }
+}
+
 const cssSelectorBuilder = {
+  element: function (value) {
+    return new Selector().element(value);
+  },
 
-    element: function(value) {
-        throw new Error('Not implemented');
-    },
+  id: function (value) {
+    return new Selector().element("").id(value);
+  },
 
-    id: function(value) {
-        throw new Error('Not implemented');
-    },
+  class: function (value) {
+    return new Selector().element("").class(value);
+  },
 
-    class: function(value) {
-        throw new Error('Not implemented');
-    },
+  attr: function (value) {
+    return new Selector().element("").attr(value);
+  },
 
-    attr: function(value) {
-        throw new Error('Not implemented');
-    },
+  pseudoClass: function (value) {
+    return new Selector().element("").pseudoClass(value);
+  },
 
-    pseudoClass: function(value) {
-        throw new Error('Not implemented');
-    },
+  pseudoElement: function (value) {
+    return new Selector().element("").pseudoElement(value);
+  },
 
-    pseudoElement: function(value) {
-        throw new Error('Not implemented');
-    },
-
-    combine: function(selector1, combinator, selector2) {
-        throw new Error('Not implemented');
-    },
+  combine: (selector1, combinator, selector2) => {
+    const newSelector = new Selector(selector1.element);
+    newSelector.parts.push(...selector1.parts);
+    newSelector.parts.push(" ");
+    newSelector.parts.push(combinator);
+    newSelector.parts.push(" ");
+    newSelector.parts.push(...selector2.parts);
+    newSelector.specificity = Math.max(
+      selector1.specificity,
+      selector2.specificity
+    );
+    return newSelector;
+  },
 };
 
-
 module.exports = {
-    Rectangle: Rectangle,
-    getJSON: getJSON,
-    fromJSON: fromJSON,
-    cssSelectorBuilder: cssSelectorBuilder
+  Rectangle: Rectangle,
+  getJSON: getJSON,
+  fromJSON: fromJSON,
+  cssSelectorBuilder: cssSelectorBuilder,
 };
